@@ -21,8 +21,8 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAll() {
-        List<User> list = userService.getEntries();
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> list = userService.getUsers();
         if (list != null)
             return new ResponseEntity<>(list, HttpStatus.FOUND);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -35,24 +35,30 @@ public class UserController {
                             .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    @GetMapping("/{userName}")
+    public ResponseEntity<User> getUserByUserName(@PathVariable String userName) {
+        Optional<User> optionalUser = userService.getUserByUserName(userName);
+        return optionalUser.map(user -> new ResponseEntity<>(user, HttpStatus.FOUND))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
 
     @PostMapping
     public ResponseEntity<User> saveUser(@RequestBody User user) {
-        userService.saveEntry(user);
+        userService.saveUser(user);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
 
-    @PutMapping("{userName}")
+    @PutMapping("/{userName}")
     public ResponseEntity<User> updateUser(@PathVariable String userName, @RequestBody User user) {
 
-        if (userService.updateEntry(userName, user))
+        if (userService.updateUser(userName, user))
             return new ResponseEntity<>(user, HttpStatus.OK);
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @DeleteMapping("/id/{myId}")
     public ResponseEntity<?> deleteUser(@PathVariable ObjectId myId) {
-        if (userService.deleteEntry(myId))
+        if (userService.deleteUser(myId))
             return new ResponseEntity<>(HttpStatus.OK);
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }

@@ -23,7 +23,7 @@ public class UserService {
         this.journalEntryRepo = journalEntryRepo;
     }
 
-    public List<User> getEntries() {
+    public List<User> getUsers() {
         return userRepo.findAll();
     }
 
@@ -31,7 +31,11 @@ public class UserService {
         return userRepo.findById(id);
     }
 
-    public void saveEntry(User user) {
+    public Optional<User> getUserByUserName(String userName) {
+        return userRepo.findByUserName(userName);
+    }
+
+    public void saveUser(User user) {
         List<ObjectId> journalIds = user.getJournalEntries()
                 .stream()
                 .map(JournalEntry::getId)
@@ -52,18 +56,18 @@ public class UserService {
         userRepo.save(user);
     }
 
-    public boolean updateEntry(String userName, User user) {
-        User oldUser = userRepo.findByUserName(userName);
-        if(oldUser!=null) {
-            oldUser.setUserName(!user.getUserName().isEmpty() ? user.getUserName() : userName);
-            oldUser.setPassword(!user.getPassword().isEmpty() ? user.getPassword() : oldUser.getPassword());
-            userRepo.save(oldUser);
+    public boolean updateUser(String userName, User user) {
+        Optional<User> oldUser = userRepo.findByUserName(userName);
+        if(oldUser.isPresent()) {
+            oldUser.get().setUserName(!user.getUserName().isEmpty() ? user.getUserName() : userName);
+            oldUser.get().setPassword(!user.getPassword().isEmpty() ? user.getPassword() : oldUser.get().getPassword());
+            userRepo.save(oldUser.get());
             return true;
         }
         return false;
     }
 
-    public boolean deleteEntry(ObjectId id) {
+    public boolean deleteUser(ObjectId id) {
         Optional<User> optionalJournalEntry = userRepo.findById(id);
         if(optionalJournalEntry.isPresent()) {
             userRepo.deleteById(id);
@@ -71,7 +75,5 @@ public class UserService {
         }
         return false;
     }
-    public User findByUserName(String userName) {
-        return userRepo.findByUserName(userName);
-    }
+
 }
