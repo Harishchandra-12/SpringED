@@ -3,8 +3,6 @@ package com.example.SpringED.service;
 import com.example.SpringED.entity.JournalEntry;
 import com.example.SpringED.repository.JournalEntryRepo;
 import org.bson.types.ObjectId;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
