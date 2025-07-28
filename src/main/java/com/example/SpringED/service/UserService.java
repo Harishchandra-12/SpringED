@@ -4,18 +4,23 @@ import com.example.SpringED.entity.JournalEntry;
 import com.example.SpringED.entity.User;
 import com.example.SpringED.repository.JournalEntryRepo;
 import com.example.SpringED.repository.UserRepo;
-import org.bson.types.ObjectId;
+import lombok.Data;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
+@Data
 public class UserService {
 
-    UserRepo userRepo;
+    private final UserRepo userRepo;
     private final JournalEntryRepo journalEntryRepo;
+    private static final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
 
     public UserService(UserRepo userRepo, JournalEntryRepo journalEntryRepo) {
@@ -27,50 +32,44 @@ public class UserService {
         return userRepo.findAll();
     }
 
-    public Optional<User> getUserById(ObjectId id) {
-        return userRepo.findById(id);
-    }
 
     public Optional<User> getUserByUserName(String userName) {
         return userRepo.findByUserName(userName);
     }
 
+    public void saveNewUser(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userRepo.save(user);
+    }
+
     public void saveUser(User user) {
-        List<ObjectId> journalIds = user.getJournalEntries()
-                .stream()
-                .map(JournalEntry::getId)
-                .collect(Collectors.toList());
-
-        // Fetch journal entries from DB
-        List<JournalEntry> journalEntries = journalEntryRepo.findAllById(journalIds);
-
-        // Validate
-        if (journalEntries.size() != journalIds.size()) {
-            throw new IllegalArgumentException("Some journal entries not found for given IDs.");
-        }
-
-        // Replace placeholders with real entries
-        user.setJournalEntries(journalEntries);
-
-        // Save user
         userRepo.save(user);
     }
 
     public boolean updateUser(String userName, User user) {
-        Optional<User> oldUser = userRepo.findByUserName(userName);
-        if(oldUser.isPresent()) {
-            oldUser.get().setUserName(!user.getUserName().isEmpty() ? user.getUserName() : userName);
-            oldUser.get().setPassword(!user.getPassword().isEmpty() ? user.getPassword() : oldUser.get().getPassword());
-            userRepo.save(oldUser.get());
+        Optional<User> optionalUser = userRepo.findByUserName(userName);
+        if(optionalUser.isPresent()) {
+            optionalUser.get().setUserName(!user.getUserName().isEmpty() ? user.getUserName() : userName);
+            optionalUser.get().setPassword(!user.getPassword().isEmpty() ? passwordEncoder.encode(user.getPassword()) : optionalUser.get().getPassword());
+            userRepo.save(optionalUser.get());
             return true;
         }
         return false;
     }
 
-    public boolean deleteUser(ObjectId id) {
-        Optional<User> optionalJournalEntry = userRepo.findById(id);
-        if(optionalJournalEntry.isPresent()) {
-            userRepo.deleteById(id);
+    @Transactional
+    public boolean deleteUserByUserName(String userName) {
+        Optional<User> optionalUser = userRepo.findByUserName(userName);
+        if(optionalUser.isPresent()) {
+            User user = optionalUser.get();
+
+            // Step 2: Delete associated journal entries using Stream API
+            Optional.ofNullable(user.getJournalEntries())
+                    .orElseGet(Collections::emptyList)
+                    .stream()
+                    .map(JournalEntry::getId)
+                    .forEach(journalEntryRepo::deleteById);
+            userRepo.deleteByUserName(userName);
             return true;
         }
         return false;

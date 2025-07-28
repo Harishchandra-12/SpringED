@@ -27,14 +27,17 @@ public class JournalEntryService {
         return user.map(User::getJournalEntries).orElse(null);
     }
 
-    public Optional<JournalEntry> getEntryById(ObjectId id) {
-        return journalEntryRepo.findById(id);
+    public Optional<JournalEntry> getEntryById(ObjectId id, String userName) {
+        return userService.getUserByUserName(userName)
+                .flatMap(user -> user.getJournalEntries()
+                        .stream()
+                        .filter(entry -> entry.getId().equals(id))
+                        .findFirst());
     }
 
     @Transactional
     public boolean saveEntry(JournalEntry journalEntry, String userName) {
-        Optional<User> optionalUser = userService.userRepo.findByUserName(userName);
-
+        Optional<User> optionalUser = userService.getUserByUserName(userName);
         if(optionalUser.isPresent()) {
             journalEntry.setDate(LocalDateTime.now());
             JournalEntry saved = journalEntryRepo.save(journalEntry);
@@ -45,36 +48,48 @@ public class JournalEntryService {
         return false;
     }
 
+    @Transactional
     public String updateEntry(ObjectId id, JournalEntry journalEntry, String userName) {
         Optional<User> optionalUser = userService.getUserByUserName(userName);
-        Optional<JournalEntry> optionalEntry = getEntryById(id);
-        if(optionalUser.isPresent()) {
-            if(optionalEntry.isPresent()) {
-                optionalUser.get().getJournalEntries().removeIf(x -> x.getId().equals(id));
-                optionalEntry.get().setContent(journalEntry.getContent() != null && !journalEntry.getContent().isEmpty() ? journalEntry.getContent() : optionalEntry.get().getContent());
-                optionalEntry.get().setTitle(!journalEntry.getTitle().isEmpty() ? journalEntry.getTitle() : optionalEntry.get().getTitle());
-                JournalEntry saved = journalEntryRepo.save(optionalEntry.get());
-                optionalUser.get().getJournalEntries().add(saved);
-                return "Successfully updated the Journal entry for the User " + userName + " with the Id" + id;
-            }
-            return "Hello" + userName + " there is no journal entry with given Id :  " + id;
+        Optional<JournalEntry> optionalEntry = getEntryById(id, userName);
 
+        if (optionalUser.isEmpty()) {
+            return "There is no user with User Name " + userName;
         }
-        return "There is no user with User Name" + userName;
+
+        if (optionalEntry.isEmpty()) {
+            return "Hello " + userName + ", there is no journal entry with given Id: " + id;
+        }
+
+        User user = optionalUser.get();
+        JournalEntry existingEntry = optionalEntry.get();
+        existingEntry.setContent(journalEntry.getContent() != null && !journalEntry.getContent().isEmpty() ? journalEntry.getContent() : optionalEntry.get().getContent());
+        existingEntry.setTitle(!journalEntry.getTitle().isEmpty() ? journalEntry.getTitle() : optionalEntry.get().getTitle());
+        JournalEntry saved = journalEntryRepo.save(existingEntry);
+        user.getJournalEntries().removeIf(x -> x.getId().equals(id));
+        user.getJournalEntries().add(saved);
+        userService.saveUser(user);
+        return "Successfully updated the Journal entry for the User " + userName + " with the Id " + id;
+
     }
 
+    @Transactional
     public String deleteEntry(ObjectId myId , String userName) {
         Optional<JournalEntry> optionalJournalEntry = journalEntryRepo.findById(myId);
         Optional<User> optionalUser = userService.getUserByUserName(userName);
-        if(optionalUser.isPresent()) {
-            if(optionalJournalEntry.isPresent()) {
-                optionalUser.get().getJournalEntries().removeIf(x -> x.getId().equals(myId));
-                journalEntryRepo.deleteById(myId);
-                userService.saveUser(optionalUser.get());
-                return "Successfully deleted the Journal entry for the User " + userName + " with the Id" + myId;
-            }
-            return "Hello" + userName + " there is no journal entry with given Id :  " + myId;
+        if (optionalUser.isEmpty()) {
+            return "There is no user with User Name " + userName;
         }
-        return "There is no user with User Name" + userName;
+
+        if (optionalJournalEntry.isEmpty()) {
+            return "Hello " + userName + ", there is no journal entry with given Id: " + myId;
+        }
+
+        optionalUser.get().getJournalEntries().removeIf(x -> x.getId().equals(myId));
+        journalEntryRepo.deleteById(myId);
+        userService.saveUser(optionalUser.get());
+        return "Successfully deleted the Journal entry for the User " + userName + " with the Id " + myId;
+
     }
+
 }
