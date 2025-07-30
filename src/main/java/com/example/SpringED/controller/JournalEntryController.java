@@ -27,7 +27,7 @@ public class JournalEntryController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userName = authentication.getName();
         List<JournalEntry> list = journalEntryService.getAllEntries(userName);
-        if(list!=null) {
+        if (list != null) {
             return new ResponseEntity<>(list, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -38,7 +38,7 @@ public class JournalEntryController {
     public ResponseEntity<JournalEntry> getJournalEntryByID(@PathVariable ObjectId myID) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userName = authentication.getName();
-        JournalEntry journalEntry = journalEntryService.getEntryById(myID , userName).orElse(null);
+        JournalEntry journalEntry = journalEntryService.getEntryById(myID, userName).orElse(null);
         if (journalEntry != null)
             return new ResponseEntity<>(journalEntry, HttpStatus.OK);
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -61,7 +61,7 @@ public class JournalEntryController {
     public ResponseEntity<String> deleteJournalEntryByID(@PathVariable ObjectId myID) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userName = authentication.getName();
-        String result = journalEntryService.deleteEntry(myID , userName);
+        String result = journalEntryService.deleteEntry(myID, userName);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
@@ -69,8 +69,8 @@ public class JournalEntryController {
     public ResponseEntity<String> updateJournalEntryByID(@PathVariable ObjectId myId, @RequestBody JournalEntry journalEntry) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userName = authentication.getName();
-        String result = journalEntryService.updateEntry(myId, journalEntry , userName);
-            return new ResponseEntity<>(result, HttpStatus.OK);
+        String result = journalEntryService.updateEntry(myId, journalEntry, userName);
+        return new ResponseEntity<>(result, HttpStatus.OK);
 
     }
 

@@ -39,6 +39,7 @@ public class UserService {
 
     public void saveNewUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.getRoles().add("USER");
         userRepo.save(user);
     }
 
@@ -48,7 +49,7 @@ public class UserService {
 
     public boolean updateUser(String userName, User user) {
         Optional<User> optionalUser = userRepo.findByUserName(userName);
-        if(optionalUser.isPresent()) {
+        if (optionalUser.isPresent()) {
             optionalUser.get().setUserName(!user.getUserName().isEmpty() ? user.getUserName() : userName);
             optionalUser.get().setPassword(!user.getPassword().isEmpty() ? passwordEncoder.encode(user.getPassword()) : optionalUser.get().getPassword());
             userRepo.save(optionalUser.get());
@@ -60,7 +61,7 @@ public class UserService {
     @Transactional
     public boolean deleteUserByUserName(String userName) {
         Optional<User> optionalUser = userRepo.findByUserName(userName);
-        if(optionalUser.isPresent()) {
+        if (optionalUser.isPresent()) {
             User user = optionalUser.get();
 
             // Step 2: Delete associated journal entries using Stream API
@@ -75,4 +76,10 @@ public class UserService {
         return false;
     }
 
+    public User saveAdmin(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.getRoles().add("ADMIN");
+        user.getRoles().add("USER");
+        return userRepo.save(user);
+    }
 }

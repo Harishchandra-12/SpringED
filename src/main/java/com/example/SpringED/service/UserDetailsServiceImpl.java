@@ -12,7 +12,7 @@ import java.util.Optional;
 @Component
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private UserRepo userRepo;
+    private final UserRepo userRepo;
 
     public UserDetailsServiceImpl(UserRepo userRepo) {
         this.userRepo = userRepo;
@@ -22,10 +22,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> optionalUser = userRepo.findByUserName(username);
 
-        if(optionalUser.isPresent()) {
+        if (optionalUser.isPresent()) {
             User user = optionalUser.get();
             return org.springframework.security.core.userdetails.User.builder()
-                    .username(username)
+                    .username(user.getUserName())
                     .password(user.getPassword())
                     .roles(user.getRoles().toArray(new String[0]))
                     .build();

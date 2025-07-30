@@ -26,7 +26,7 @@ public class UserController {
         String userName = authentication.getName();
         Optional<User> optionalUser = userService.getUserByUserName(userName);
         return optionalUser.map(user -> new ResponseEntity<>(user, HttpStatus.FOUND))
-                            .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @PutMapping

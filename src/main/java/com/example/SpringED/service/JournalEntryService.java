@@ -38,7 +38,7 @@ public class JournalEntryService {
     @Transactional
     public boolean saveEntry(JournalEntry journalEntry, String userName) {
         Optional<User> optionalUser = userService.getUserByUserName(userName);
-        if(optionalUser.isPresent()) {
+        if (optionalUser.isPresent()) {
             journalEntry.setDate(LocalDateTime.now());
             JournalEntry saved = journalEntryRepo.save(journalEntry);
             optionalUser.get().getJournalEntries().add(saved);
@@ -74,7 +74,7 @@ public class JournalEntryService {
     }
 
     @Transactional
-    public String deleteEntry(ObjectId myId , String userName) {
+    public String deleteEntry(ObjectId myId, String userName) {
         Optional<JournalEntry> optionalJournalEntry = journalEntryRepo.findById(myId);
         Optional<User> optionalUser = userService.getUserByUserName(userName);
         if (optionalUser.isEmpty()) {
